@@ -8,22 +8,33 @@ from reviewer.config.reviewer_config import Configuration
 from reviewer.system_utils.diff import DiffFile
 from reviewer.tokenizator.token_counter import TokenCounter
 
+
 class ReviewModes:
-    def __init__(self, config: Configuration, reviewer: Reviewer, token_counter: TokenCounter, sanitizer: Sanitizer):
+    def __init__(
+        self,
+        config: Configuration,
+        reviewer: Reviewer,
+        token_counter: TokenCounter,
+        sanitizer: Sanitizer,
+    ):
         self.__config = config
         self.__reviewer = reviewer
         self.__token_counter = token_counter
         self.__sanitizer = sanitizer
 
-
     def auto(self, diffs: list[DiffFile]) -> list[str]:
-        for diff in diffs:
-            diff.tokens_count = self.__token_counter.count_tokens(diff.original_content + diff.diff)
-            if diff.tokens_count < 2048:
-                continue
+        for _, diffs_in_dir in self.__group_by_directory(diffs):
+            for diff in diffs_in_dir:
+                diff.tokens_count = self.__token_counter.count_tokens(
+                    diff.original_content + diff.diff
+                )
+                if diff.tokens_count < 2048:
+                    continue
 
-            diff.original_content = self.__sanitizer.sanitize(diff)
-            diff.tokens_count = self.__token_counter.count_tokens(diff.original_content + diff.diff)
+                self.__sanitizer.sanitize(diff, diffs_in_dir)
+                diff.tokens_count = self.__token_counter.count_tokens(
+                    diff.original_content + diff.diff
+                )
 
         if sum(diff.tokens_count for diff in diffs) < self.__config.context_window:
             return self.all_files_at_once(diffs)
@@ -55,7 +66,7 @@ class ReviewModes:
         limit = self.__config.context_window
         packable_items = []
 
-        type_map = {'dir': 0, 'file': 1, 'file_oversized': 2}
+        type_map = {"dir": 0, "file": 1, "file_oversized": 2}
 
         # Create packable items from directories
         sorted_directory_paths = sorted(grouped_by_directory.keys())
@@ -69,46 +80,58 @@ class ReviewModes:
 
             if dir_total_tokens <= limit:
                 # This directory as a whole can be a packable item
-                packable_items.append({
-                    'id': directory_path,
-                    'files': list(dir_files), # Keep original order of files within small dir
-                    'tokens': dir_total_tokens,
-                    'type': 'dir',
-                    'original_path': directory_path
-                })
+                packable_items.append(
+                    {
+                        "id": directory_path,
+                        "files": list(
+                            dir_files
+                        ),  # Keep original order of files within small dir
+                        "tokens": dir_total_tokens,
+                        "type": "dir",
+                        "original_path": directory_path,
+                    }
+                )
             else:
                 # Directory is too large, break it into individual files
                 sorted_files_in_dir = sorted(dir_files, key=lambda f: f.name)
                 for file_obj in sorted_files_in_dir:
                     if file_obj.tokens_count == 0:
                         continue
-                    
-                    item_type = 'file_oversized' if file_obj.tokens_count > limit else 'file'
-                    packable_items.append({
-                        'id': file_obj.full_name,
-                        'files': [file_obj],
-                        'tokens': file_obj.tokens_count,
-                        'type': item_type,
-                        'original_path': file_obj.full_name
-                    })
+
+                    item_type = (
+                        "file_oversized" if file_obj.tokens_count > limit else "file"
+                    )
+                    packable_items.append(
+                        {
+                            "id": file_obj.full_name,
+                            "files": [file_obj],
+                            "tokens": file_obj.tokens_count,
+                            "type": item_type,
+                            "original_path": file_obj.full_name,
+                        }
+                    )
 
         # Sort packable items: by tokens, then type (dirs first), then path
-        packable_items.sort(key=lambda x: (x['tokens'], type_map[x['type']], x['original_path']))
+        packable_items.sort(
+            key=lambda x: (x["tokens"], type_map[x["type"]], x["original_path"])
+        )
 
         all_groups: list[list[DiffFile]] = []
         current_group_files: list[DiffFile] = []
         current_group_tokens = 0
 
         for item in packable_items:
-            item_files = item['files']
-            item_tokens = item['tokens']
+            item_files = item["files"]
+            item_tokens = item["tokens"]
 
-            if item['type'] == 'file_oversized':
+            if item["type"] == "file_oversized":
                 if current_group_files:
                     all_groups.append(list(current_group_files))
                     current_group_files = []
                     current_group_tokens = 0
-                all_groups.append(list(item_files)) # Oversized item forms its own group
+                all_groups.append(
+                    list(item_files)
+                )  # Oversized item forms its own group
                 continue
 
             # item_tokens is guaranteed to be <= limit here (unless it's an oversized dir that wasn't split, which logic prevents)
@@ -120,7 +143,7 @@ class ReviewModes:
                     all_groups.append(list(current_group_files))
                 current_group_files = list(item_files)
                 current_group_tokens = item_tokens
-        
+
         if current_group_files:
             all_groups.append(list(current_group_files))
 
@@ -130,7 +153,7 @@ class ReviewModes:
         result = []
         for diff_file in diffs:
             review = self.__reviewer.review_file(diff_file)
-            result.append(result)
+            result.append(review)
         return result
 
     def all_files_at_once(self, diffs: list[DiffFile]) -> list[str]:

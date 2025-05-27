@@ -9,10 +9,12 @@ logging.basicConfig(
     ],
 )
 
+
 def main():
-   locator = ServiceLocator()
-   processor = locator.get_reviewer_processor()
-   processor.process_review()
+    locator = ServiceLocator()
+    processor = locator.get_reviewer_processor()
+    processor.process_review()
+
 
 if __name__ == "__main__":
     main()

@@ -1,129 +1,198 @@
-import os
-from pathlib import Path
-from typing import Dict, Optional, Any
-from tree_sitter import Parser, Language, Tree
-from tree_sitter_languages import get_language
+import logging
+from typing import Optional
 
-class AstParser:
-    """
-    Parses files in a repository into Abstract Syntax Trees (ASTs)
-    using tree-sitter. Supports Python, Go, and TypeScript.
-    """
-    def __init__(self, repo_path: str):
+from grep_ast import filename_to_lang
+from grep_ast.tsl import get_parser, get_language
+from tree_sitter import Tree, Node
+from tree_sitter_languages.core import Language
+
+# Define query patterns for identifying declarations.
+# These are for Python. More languages can be added.
+_PYTHON_DECLARATION_QUERIES = [
+    # Query for decorated functions/classes (captures the whole decorated block)
+    (
         """
-        Initializes the AstParser with the path to the repository.
-
-        Args:
-            repo_path: The root path of the code repository.
+        (decorated_definition
+          definition: [
+            (function_definition name: (identifier) @name (#eq? @name "{0}"))
+            (class_definition name: (identifier) @name (#eq? @name "{0}"))
+          ]
+        ) @declaration
+        """,
+        "declaration",  # Capture name for the node to remove
+    ),
+    # Query for non-decorated functions
+    (
         """
-        self.repo_path: Path = Path(repo_path)
-        if not self.repo_path.is_dir():
-            raise ValueError(f"Repository path does not exist or is not a directory: {repo_path}")
-
-        self.parser: Parser = Parser()
-        self._language_map: Dict[str, str] = {
-            ".py": "python",
-            ".go": "go",
-            ".ts": "typescript",
-            ".tsx": "tsx",  # TypeScript with JSX
-        }
-        # Eagerly load languages to catch issues early
-        try:
-            self._tree_sitter_languages: Dict[str, Language] = {
-                "python": get_language("python"),
-                "go": get_language("go"),
-                "typescript": get_language("typescript"),
-                "tsx": get_language("tsx"),
-            }
-        except Exception as e:
-            # This can happen if the grammars are not correctly installed/found
-            raise RuntimeError(
-                "Failed to load tree-sitter languages. "
-                "Ensure tree-sitter grammars are correctly installed. "
-                f"Original error: {e}"
+        (function_definition
+          name: (identifier) @name (#eq? @name "{}")
+        ) @declaration
+        """,
+        "declaration",
+    ),
+    # Query for non-decorated classes
+    (
+        """
+        (class_definition
+          name: (identifier) @name (#eq? @name "{}")
+        ) @declaration
+        """,
+        "declaration",
+    ),
+    # Query for assignment statements
+    (
+        """
+        (expression_statement
+            (assignment
+                left: (identifier) @name (#eq? @name "{0}")
             )
+        ) @declaration
+        """,
+        "declaration",
+    ),
+]
 
-
-    def _get_tree_sitter_language(self, file_path: Path) -> Language | None:
+# Define query patterns for Go
+_GO_DECLARATION_QUERIES = [
+    # Query for functions
+    (
         """
-        Determines the tree-sitter Language object based on the file extension.
+        (function_declaration
+          name: (identifier) @name (#eq? @name "{}")
+        ) @declaration
+        """,
+        "declaration",
+    ),
+    # Query for methods
+    (
         """
-        suffix: str = file_path.suffix.lower() # Use lower for case-insensitivity
-        lang_name: Optional[str] = self._language_map.get(suffix)
-        if lang_name:
-            return self._tree_sitter_languages.get(lang_name)
-        return None
-
-    def parse_file_to_ast(self, file_path: Path) -> Optional[Tree]:
+        (method_declaration
+          name: (field_identifier) @name (#eq? @name "{}")
+        ) @declaration
+        """,
+        "declaration",
+    ),
+    # Query for type specifications (e.g., structs, interfaces)
+    # This targets the individual type spec, e.g., `MyType int` in `type ( MyType int )`
+    (
         """
-        Parses a single file and returns its tree-sitter AST (Tree object).
-
-        Args:
-            file_path: The absolute or relative path to the file.
-
-        Returns:
-            A tree_sitter.Tree object if parsing is successful, None otherwise.
+        (type_declaration
+            (type_spec
+                name: (type_identifier) @name
+            )
+            (#eq? @name "{}")
+        ) @declaration
+        """,
+        "declaration",
+    ),
+    # Query for constant specifications
+    # This targets the individual const spec, e.g., `MyConst = 1` in `const ( MyConst = 1 )`
+    (
         """
-        absolute_file_path: Path = file_path
-        if not absolute_file_path.is_absolute():
-            absolute_file_path = self.repo_path / file_path
-
-        if not absolute_file_path.is_file():
-            print(f"Warning: File not found: {absolute_file_path}")
-            return None
-
-        language = self._get_tree_sitter_language(absolute_file_path)
-        if not language:
-            # This file type is not supported, skip silently or log as debug
-            # print(f"Debug: Unsupported language for file: {absolute_file_path}")
-            return None
-
-        self.parser.set_language(language)
-
-        try:
-            with open(absolute_file_path, "rb") as f:  # tree-sitter expects bytes
-                content: bytes = f.read()
-            tree: Tree = self.parser.parse(content)
-            return tree
-        except Exception as e:
-            print(f"Error parsing file {absolute_file_path}: {e}")
-            return None
-
-    def generate_repomap(self) -> Dict[str, Any]:
+        (const_spec
+          name: (identifier) @name (#eq? @name "{}")
+        ) @declaration
+        """,
+        "declaration",
+    ),
+    # Query for short variable declarations (e.g., var := value)
+    (
         """
-        Generates a representation of the repository structure and code elements.
-        This is a placeholder and should be expanded to extract meaningful
-        information from ASTs for LLM consumption.
+        (short_var_declaration
+          left: (expression_list (identifier) @name (#eq? @name "{0}"))
+        ) @declaration
+        """,
+        "declaration",
+    ),
+    # Query for var specifications (e.g. var myVar = 1 or var myVar int = 1)
+    # This targets the var_spec itself.
+    (
         """
-        repomap_data: Dict[str, Any] = {}
-        print(f"Starting repomap generation for repository: {self.repo_path}")
+        (var_spec
+          name: (identifier) @name (#eq? @name "{0}")
+        ) @declaration
+        """,
+        "declaration",
+    ),
+]
 
-        for file_path in self.repo_path.rglob("*"):  # Iterate through all files recursively
-            if file_path.is_file():
-                # Check if the file extension is in our supported languages
-                if file_path.suffix.lower() in self._language_map:
-                    # print(f"Attempting to parse: {file_path.relative_to(self.repo_path)}")
-                    ast: Optional[Tree] = self.parse_file_to_ast(file_path)
-                    if ast:
-                        # Placeholder: In a real scenario, extract relevant info from AST
-                        # For example, function names, class names, imports, etc.
-                        repomap_data[str(file_path.relative_to(self.repo_path))] = {
-                            "status": "AST_parsed_successfully",
-                            "node_count": len(ast.root_node.children) # Example metric
-                        }
-                    else:
-                         repomap_data[str(file_path.relative_to(self.repo_path))] = {
-                            "status": "AST_parsing_failed_or_skipped"
-                        }
-                # else:
-                    # print(f"Skipping unsupported file type: {file_path.relative_to(self.repo_path)}")
-        
-        print("Repomap generation (placeholder) complete.")
-        # For debugging, you might want to print parts of the repomap_data
-        # For example, print the first 5 entries:
-        # for i, (k, v) in enumerate(repomap_data.items()):
-        #     if i < 5:
-        #         print(f"  {k}: {v}")
-        #     else:
-        #         break
-        return repomap_data
+_LANG_SPECIFIC_QUERIES = {
+    "python": _PYTHON_DECLARATION_QUERIES,
+    "go": _GO_DECLARATION_QUERIES,
+    # Add queries for other languages here, e.g., "javascript"
+}
+
+
+class ParsedFile:
+    def __init__(self, tree: Tree, original_content: bytes, lang: str):
+        self.tree = tree
+        self.original_content = original_content
+        self.content = original_content
+        self.lang = lang
+        self.language: Language = get_language(lang)
+
+    def remove_declaration(self, name_to_remove: str) -> bool:
+        """
+        Removes a class or function/method declaration by its name.
+        Updates self.content and re-parses self.tree.
+        Returns True if a declaration was found and removed, False otherwise.
+        """
+        query_patterns = _LANG_SPECIFIC_QUERIES.get(self.lang)
+        if not query_patterns:
+            return False  # No queries defined for this language
+
+        node_to_remove_data: Optional[tuple[int, int]] = (
+            None  # Stores (start_byte, end_byte) of the node
+        )
+
+        for query_text_template, capture_name_for_node in query_patterns:
+            formatted_query_text = query_text_template.format(name_to_remove)
+            try:
+                query = self.language.query(formatted_query_text)
+            except Exception as e:  # Syntax error in query, or other tree-sitter issue
+                logging.log(
+                    logging.ERROR, f"Failed to query {formatted_query_text} due to {e}"
+                )
+                continue
+
+            captures: dict[str, list[Node]] = query.captures(self.tree.root_node)
+
+            if len(captures) == 0:
+                continue
+
+            name = captures["name"][0].text
+            if name == bytes(name_to_remove, "utf-8"):
+                node = captures["declaration"][0]
+                node_to_remove_data = (node.start_byte, node.end_byte)
+                break
+
+        if node_to_remove_data:
+            start_byte, end_byte = node_to_remove_data
+
+            # Remove the content of the node
+            self.content = self.content[:start_byte] + self.content[end_byte:]
+
+            # Re-parse the modified content
+            parser = get_parser(self.lang)
+            self.tree = parser.parse(self.content)
+            return True
+
+        return False
+
+
+class ASTParser:
+    def __init__(self):
+        pass
+
+    def parse(self, path_to_file: str, content: bytes) -> ParsedFile:
+        lang = filename_to_lang(path_to_file)
+        if lang is None:
+            raise ValueError(f"Could not determine language for file: {path_to_file}")
+
+        tree = self.__file_to_tree(lang, content)
+        return ParsedFile(tree=tree, original_content=content, lang=lang)
+
+    def __file_to_tree(self, lang: str, content: bytes) -> Tree:
+        parser = get_parser(lang)
+        tree = parser.parse(content)
+        return tree

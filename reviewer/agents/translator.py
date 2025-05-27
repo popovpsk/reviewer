@@ -3,8 +3,8 @@ from reviewer.config.reviewer_config import Configuration
 
 
 class Translator:
-    PROMPT = """<SRC_TEXT>{}</SRC_TEXT>\n Твоя задача перевести SRC_TEXT на русский язык. Этот текст это результат код ревью.
-Этот текст содержит ссылки на код. Тебе ЗАПРЕЩЕНО переводить код или ссылки на код. Ты ДОЛЖЕН переводить только весь остальной текст.
+    PROMPT = """<SRC_TEXT>{}</SRC_TEXT>\nТвоя задача перевести SRC_TEXT на русский язык. Этот текст это результат код ревью.
+Этот текст содержит ссылки на код. Тебе ЗАПРЕЩЕНО переводить сам код или ссылки на код. Ты ДОЛЖЕН переводить только весь остальной текст.
 Форматируй этот перевод так, чтобы длина строки в выходном тексте была не больше 200 символов.
     """
 
@@ -16,4 +16,4 @@ class Translator:
         if not self.__config.translate_enabled:
             return src
 
-        return self.llm.generate("translate",self.PROMPT.format(src))
+        return self.llm.generate("translate", self.PROMPT.format(src))

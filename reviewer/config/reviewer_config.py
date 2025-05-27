@@ -1,12 +1,13 @@
 import argparse
-import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+
 
 class ReviewMode:
     Auto = "auto"
     FileByFile = "file_by_file"
     AllFilesAtOnce = "all_files_at_once"
     PackageByPackage = "package_by_package"
+
 
 MODEL_BASE_URL = "https://some-url/"
 MODEL_API_KEY = "1"
@@ -15,6 +16,7 @@ MODEL_NAME = "DeepSeek-R1-671B-AWQ"
 FALLBACK_MODEL_BASE_URL = "http://192.168.3.9:8080/v1"
 FALLBACK_MODEL_API_KEY = "1"
 FALLBACK_MODEL_NAME = "llama-model"
+
 
 class InferenceProvider:
     BigModel = "big"
@@ -40,10 +42,13 @@ class Configuration:
     translate_enabled: bool = DEFAULT_TRANSLATE_ENABLED
     context_window: int = 32768
 
+
 def get_configuration() -> Configuration:
     parser = argparse.ArgumentParser(description="Code reviewer using LLM")
     parser.add_argument("repo", type=str, help="Path to the repository to review")
-    parser.add_argument("target_branch", type=str, help="Target branch to compare against master")
+    parser.add_argument(
+        "target_branch", type=str, help="Target branch to compare against master"
+    )
     parser.add_argument(
         "--review_test_files",
         action=argparse.BooleanOptionalAction,
@@ -54,7 +59,12 @@ def get_configuration() -> Configuration:
         "--review_mode",
         type=str,
         default=DEFAULT_REVIEW_MODE,
-        choices=[ReviewMode.FileByFile, ReviewMode.AllFilesAtOnce, ReviewMode.PackageByPackage, ReviewMode.Auto],
+        choices=[
+            ReviewMode.FileByFile,
+            ReviewMode.AllFilesAtOnce,
+            ReviewMode.PackageByPackage,
+            ReviewMode.Auto,
+        ],
         help=f"Review mode (default: {DEFAULT_REVIEW_MODE})",
     )
     parser.add_argument(
@@ -68,7 +78,7 @@ def get_configuration() -> Configuration:
         "--translate",
         action=argparse.BooleanOptionalAction,
         default=DEFAULT_TRANSLATE_ENABLED,
-        help=f"Enable/disable translation of review results (default: {'enabled' if DEFAULT_TRANSLATE_ENABLED else 'disabled'})"
+        help=f"Enable/disable translation of review results (default: {'enabled' if DEFAULT_TRANSLATE_ENABLED else 'disabled'})",
     )
 
     args = parser.parse_args()
@@ -79,5 +89,5 @@ def get_configuration() -> Configuration:
         review_test_files=args.review_test_files,
         review_mode=args.review_mode,
         inference_provider=args.inference_provider,
-        translate_enabled=args.translate
+        translate_enabled=args.translate,
     )

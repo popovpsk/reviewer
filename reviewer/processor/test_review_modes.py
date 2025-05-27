@@ -7,7 +7,6 @@ from reviewer.processor.review_modes import ReviewModes
 
 
 class TestSplitByContextRecursive(unittest.TestCase):
-
     def setUp(self):
         self.mock_config = Mock(spec=Configuration)
         self.mock_reviewer = Mock()
@@ -17,14 +16,20 @@ class TestSplitByContextRecursive(unittest.TestCase):
             config=self.mock_config,
             reviewer=self.mock_reviewer,
             token_counter=self.mock_token_counter,
-            sanitizer=self.mock_sanitizer
+            sanitizer=self.mock_sanitizer,
         )
 
     @staticmethod
     def _create_diff_file(full_name: str, tokens: int) -> DiffFile:
-        parts = full_name.split('/')
+        parts = full_name.split("/")
         name = parts[-1]
-        return DiffFile(name=name, full_name=full_name, diff="", original_content="", tokens_count=tokens)
+        return DiffFile(
+            name=name,
+            full_name=full_name,
+            diff="",
+            original_content="",
+            tokens_count=tokens,
+        )
 
     @staticmethod
     def _get_file_names(groups: list[list[DiffFile]]) -> list[list[str]]:
@@ -73,12 +78,12 @@ class TestSplitByContextRecursive(unittest.TestCase):
         self.mock_config.context_window = 8000
         # Dirs: A(2k), B(15k -> B1(5k), B2(5k), B3(5k)), C(7k), D(2k)
         diffs = [
-            self._create_diff_file("dir_a/file_a.py", 2000),       # Dir A
-            self._create_diff_file("dir_b/file_b1.py", 5000),     # Dir B
-            self._create_diff_file("dir_b/file_b2.py", 5000),     # Dir B
-            self._create_diff_file("dir_b/file_b3.py", 5000),     # Dir B
-            self._create_diff_file("dir_c/file_c.py", 7000),       # Dir C
-            self._create_diff_file("dir_d/file_d.py", 2000),       # Dir D
+            self._create_diff_file("dir_a/file_a.py", 2000),  # Dir A
+            self._create_diff_file("dir_b/file_b1.py", 5000),  # Dir B
+            self._create_diff_file("dir_b/file_b2.py", 5000),  # Dir B
+            self._create_diff_file("dir_b/file_b3.py", 5000),  # Dir B
+            self._create_diff_file("dir_c/file_c.py", 7000),  # Dir C
+            self._create_diff_file("dir_d/file_d.py", 2000),  # Dir D
         ]
         # Packable items sorted by (tokens, type, path):
         # 1. dir_a (2000, dir, "dir_a/file_a.py")
@@ -100,21 +105,23 @@ class TestSplitByContextRecursive(unittest.TestCase):
         # Group5: dir_c (7k).
         result = self.review_modes.split_by_context_recursive(diffs)
         expected_names = [
-            ["dir_a/file_a.py", "dir_d/file_d.py"], # Group 1 (4k)
-            ["dir_b/file_b1.py"],                   # Group 2 (5k)
-            ["dir_b/file_b2.py"],                   # Group 3 (5k)
-            ["dir_b/file_b3.py"],                   # Group 4 (5k)
-            ["dir_c/file_c.py"],                    # Group 5 (7k)
+            ["dir_a/file_a.py", "dir_d/file_d.py"],  # Group 1 (4k)
+            ["dir_b/file_b1.py"],  # Group 2 (5k)
+            ["dir_b/file_b2.py"],  # Group 3 (5k)
+            ["dir_b/file_b3.py"],  # Group 4 (5k)
+            ["dir_c/file_c.py"],  # Group 5 (7k)
         ]
         self.assertEqual(self._get_file_names(result), expected_names)
 
     def test_single_large_dir_split_into_files(self):
         self.mock_config.context_window = 8000
         diffs = [
-            self._create_diff_file("large_dir/file_c.py", 3000), # ensure sorted by name
+            self._create_diff_file(
+                "large_dir/file_c.py", 3000
+            ),  # ensure sorted by name
             self._create_diff_file("large_dir/file_a.py", 4000),
             self._create_diff_file("large_dir/file_b.py", 5000),
-        ] # Total 12000 for large_dir.
+        ]  # Total 12000 for large_dir.
         # Files from large_dir, sorted by name: file_a (4k), file_b (5k), file_c (3k)
         # Packable items: file_c(3k), file_a(4k), file_b(5k) (sorted by tokens, then path)
         # 1. file_c (3k)
@@ -125,7 +132,10 @@ class TestSplitByContextRecursive(unittest.TestCase):
         # Group2: file_b (5k)
         result = self.review_modes.split_by_context_recursive(diffs)
         expected_names = [
-            ["large_dir/file_c.py", "large_dir/file_a.py"], # files are sorted by name when dir is split, then packed by token size
+            [
+                "large_dir/file_c.py",
+                "large_dir/file_a.py",
+            ],  # files are sorted by name when dir is split, then packed by token size
             ["large_dir/file_b.py"],
         ]
         self.assertEqual(self._get_file_names(result), expected_names)
@@ -164,9 +174,7 @@ class TestSplitByContextRecursive(unittest.TestCase):
         # Group1: dir1 (file1.py only) + dir2 (file2.py) = 3k
         result = self.review_modes.split_by_context_recursive(diffs)
         # The zero token file is part of dir1 if dir1 is packed as a whole.
-        expected_names = [
-            ["dir1/file1.py", "dir1/zero_token_file.py", "dir2/file2.py"]
-        ]
+        expected_names = [["dir1/file1.py", "dir1/zero_token_file.py", "dir2/file2.py"]]
         self.assertEqual(self._get_file_names(result), expected_names)
 
     def test_files_with_zero_tokens_in_large_dir(self):
@@ -175,7 +183,7 @@ class TestSplitByContextRecursive(unittest.TestCase):
             self._create_diff_file("large_dir/file1.py", 2000),
             self._create_diff_file("large_dir/zero_file.py", 0),
             self._create_diff_file("large_dir/file2.py", 2500),
-        ] # large_dir total 4500.
+        ]  # large_dir total 4500.
         # Files from large_dir (sorted): file1(2k), file2(2.5k), zero_file(0k)
         # Packable items: file1(2k), file2(2.5k). zero_file is skipped.
         # Group1: file1(2k)
@@ -192,14 +200,12 @@ class TestSplitByContextRecursive(unittest.TestCase):
         diffs = [
             self._create_diff_file("dir1/file_z.py", 100),
             self._create_diff_file("dir1/file_a.py", 100),
-        ] # dir1 total 200
+        ]  # dir1 total 200
         result = self.review_modes.split_by_context_recursive(diffs)
         # Files within a small directory that is packed as a whole should maintain their original relative order.
-        expected_names = [
-            ["dir1/file_z.py", "dir1/file_a.py"]
-        ]
+        expected_names = [["dir1/file_z.py", "dir1/file_a.py"]]
         self.assertEqual(self._get_file_names(result), expected_names)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
