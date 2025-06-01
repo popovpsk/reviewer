@@ -7,18 +7,19 @@ from reviewer.llm.llm import LLM
 from reviewer.processor.processor import ReviewerProcessor
 from reviewer.processor.review_modes import ReviewModes
 from reviewer.tokenizator.token_counter import TokenCounter
+from typing import Optional
 
 
 class ServiceLocator:
-    __reviewer_processor: ReviewerProcessor = None
-    __configuration: Configuration = None
-    __translator: Translator = None
-    __llm: LLM = None
-    __review_modes: ReviewModes = None
-    __reviewer: Reviewer = None
-    __token_counter: TokenCounter = None
-    __sanitizer: Sanitizer = None
-    __ast_parser: ASTParser = None
+    __reviewer_processor: Optional[ReviewerProcessor] = None
+    __configuration: Optional[Configuration] = None
+    __llm: Optional[LLM] = None
+    __reviewer: Optional[Reviewer] = None
+    __sanitizer: Optional[Sanitizer] = None
+    __translator: Optional[Translator] = None
+    __ast_parser: Optional[ASTParser] = None
+    __token_counter: Optional[TokenCounter] = None
+    __review_modes: Optional[ReviewModes] = None
 
     def get_reviewer_processor(self) -> ReviewerProcessor:
         if not self.__reviewer_processor:

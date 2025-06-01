@@ -32,7 +32,9 @@ Begin your review now."""
 ```
 </master_version>>
 <diff>
+```git diff
 {}
+```
 </diff>\n"""
 
     def __init__(self, llm: LLM):
