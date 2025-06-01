@@ -25,14 +25,14 @@ def func_to_remove(a):
 
 def func_to_keep():
     print("hello")
-    
+
 class ClassToRemove:
     def method(self):
         pass
 
 class ClassToKeep:
     pass
-    
+
 dict_to_remove = {"a": 1, "b": 2}
 dict_to_keep = {"c": 3}
 ```
@@ -61,20 +61,24 @@ class Sanitizer:
     def sanitize(self, file: DiffFile, diffs: list[DiffFile]) -> None:
         logging.debug(f"sanitize source: {file.name}")
 
+        original_file = self.__ast_parser.parse(
+            file.full_name, bytes(file.original_content, "utf-8")
+        )
+        if not original_file:
+            return
+
         git_diff = "\n".join([d.diff for d in diffs])
 
         prompt = (
-            CONTEXT.format(file.full_name, file.original_content, git_diff)
-            + SANITIZE_PROMPT
+                CONTEXT.format(file.full_name, file.original_content, git_diff)
+                + SANITIZE_PROMPT
         )
+
         llm_response = self.__llm.generate(f"sanitize:{file.name}", prompt)
         declarations_to_delete = self.__parse_llm_response(llm_response)
         if not declarations_to_delete:
             return
 
-        original_file = self.__ast_parser.parse(
-            file.full_name, bytes(file.original_content, "utf-8")
-        )
         for definition in declarations_to_delete:
             original_file.remove_declaration(definition)
 

@@ -5,7 +5,7 @@ import subprocess
 def get_local_branches() -> list[str]:
     try:
         result = subprocess.run(
-            ["git", "branch"],
+            ["git", "branch", "-a"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,

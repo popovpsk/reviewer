@@ -184,8 +184,11 @@ class ASTParser:
     def __init__(self):
         pass
 
-    def parse(self, path_to_file: str, content: bytes) -> ParsedFile:
+    def parse(self, path_to_file: str, content: bytes) -> Optional[ParsedFile]:
         lang = filename_to_lang(path_to_file)
+        if not lang or lang not in _LANG_SPECIFIC_QUERIES:
+            return None
+
         if lang is None:
             raise ValueError(f"Could not determine language for file: {path_to_file}")
 

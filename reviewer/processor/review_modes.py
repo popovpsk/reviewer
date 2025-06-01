@@ -23,13 +23,17 @@ class ReviewModes:
         self.__sanitizer = sanitizer
 
     def auto(self, diffs: list[DiffFile]) -> list[str]:
-        for _, diffs_in_dir in self.__group_by_directory(diffs):
+        for _, diffs_in_dir in self.__group_by_directory(diffs).items():
             for diff in diffs_in_dir:
                 diff.tokens_count = self.__token_counter.count_tokens(
                     diff.original_content + diff.diff
                 )
+
+                if not diff.original_content:
+                    continue
                 if diff.tokens_count < 2048:
                     continue
+
 
                 self.__sanitizer.sanitize(diff, diffs_in_dir)
                 diff.tokens_count = self.__token_counter.count_tokens(

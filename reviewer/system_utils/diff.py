@@ -16,11 +16,10 @@ class DiffFile:
 def diff_master(branch: str):
     git.fetch()
     git.pull()
-    git.checkout(branch)
 
     branches = git.get_local_branches()
-    if branch not in branches:
-        raise ValueError("branch does not exist")
+    if branch not in branches and f"remotes/origin/{branch}" not in branches:
+        raise ValueError(f"branch {branch} does not exist")
 
     git.checkout(branch)
     git.pull()
