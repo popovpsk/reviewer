@@ -20,20 +20,20 @@ All this code has already been compiled successfully and has no compilation and 
 Tests have been compiled and passed, but the project lacks 100% coverage, offering no guarantees.
 Keep your feedback direct and concise.
 Focus exclusively on significant issues and errors.
+The master file might have been sanitized and some unnecessary code removed.
+I assure you that all the code provided to you is correct, formatted, and free of compilation or linting errors.
 Respond without using any Markdown formatting, code blocks, or special highlighting—just plain text.
 Begin your review now."""
 
-    CONTEXT = """<file_name>
+    CONTEXT = """<FILE_NAME>
 {}
-</file_name>
-<master_version>
+</FILE_NAME>
+<MASTER_VERSION>
 ```{}
 {}
 ```
-</master_version>>
-<diff>
-{}
-</diff>\n"""
+</MASTER_VERSION>
+"""
 
     def __init__(self, llm: LLM):
         self.llm = llm
@@ -54,19 +54,25 @@ Begin your review now."""
         return formatted
 
     def review_files(self, diffs: List[DiffFile], name: str = "all files") -> str:
-        context = ""
-        for f in diffs:
-            context = context + self.CONTEXT.format(
-                f.full_name,
-                self.__language_from_extension(f.name),
-                f.original_content,
-                f.diff,
-            )
-
-        prompt = f"{context}{self.PROMPT}"
+        prompt = self._make_files_prompt(diffs)
         result = self.llm.generate(f"review: {name}", prompt)
         formatted = f"\n{name}:{result}"
         return formatted
+
+    def _make_files_prompt(self, diffs: list[DiffFile]) -> str:
+        context = ""
+        diff = ""
+        for f in diffs:
+            context += self.CONTEXT.format(
+                f.full_name,
+                self.__language_from_extension(f.name),
+                f.original_content,
+            )
+            diff += f.diff + "\n"
+
+        diff = f"<DIFF>\n{diff}</DIFF>"
+
+        return f"{context}\n{diff}\n{self.PROMPT}"
 
     @staticmethod
     def __language_from_extension(file_name: str) -> str:

@@ -42,13 +42,13 @@ dict_to_remove
 """  # noqa
 
 CONTEXT = """
-<file_name>{}</file_name>
-<master_version>
+<FILE_NAME>{}</FILE_NAME>
+<MASTER_VERSION>
 {}
-</master_version>
-<diff>
+</MASTER_VERSION>
+<DIFF>
 {}
-</diff>
+</DIFF>
 """
 
 
