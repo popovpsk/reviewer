@@ -19,3 +19,8 @@ tree-sitter-languages = "^1.10.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+lint.select = ["N", "B", "A", "E", "W", "F", "ASYNC", "S", "D", "I"]
+line-length = 120
+lint.ignore = ["D205", "D401", "D100", "S101", "D101", "D102", "D104", "D103", "D107", "D203", "D212", "D213"]

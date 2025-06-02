@@ -4,14 +4,11 @@ import os
 from reviewer.agents.translator import Translator
 from reviewer.config.reviewer_config import Configuration, ReviewMode
 from reviewer.processor.review_modes import ReviewModes
-from reviewer.system_utils.diff import DiffFile
-from reviewer.system_utils.diff import diff_master, get_git_diff_files
+from reviewer.system_utils.diff import DiffFile, diff_master, get_git_diff_files
 
 
 class ReviewerProcessor:
-    def __init__(
-        self, config: Configuration, translator: Translator, review_modes: ReviewModes
-    ):
+    def __init__(self, config: Configuration, translator: Translator, review_modes: ReviewModes):
         self.config = config
         self.__translator = translator
         self.__review_modes = review_modes
@@ -23,11 +20,11 @@ class ReviewerProcessor:
         diffs = self.__filter_files_to_review(diffs, self.config)
 
         logging.info(
-            f"repo: {self.config.repo}, branch: {self.config.target_branch}\nreview_test_files: {self.config.review_test_files}\nmode: {self.config.review_mode}"
+            f"""repo: {self.config.repo}, branch: {self.config.target_branch}
+review_test_files: {self.config.review_test_files}
+mode: {self.config.review_mode}"""
         )
-        logging.info(
-            f"files to review:\n{str.join('\n', [d.full_name for d in diffs])}"
-        )
+        logging.info(f"files to review:\n{str.join('\n', [d.full_name for d in diffs])}")
         logging.info(f"inference provider: {self.config.inference_provider}")
         logging.info(f"translate enabled: {self.config.translate_enabled}")
 
@@ -55,9 +52,7 @@ class ReviewerProcessor:
             logging.info("No review results to display.")
 
     @staticmethod
-    def __filter_files_to_review(
-        src: list[DiffFile], config: Configuration
-    ) -> list[DiffFile]:
+    def __filter_files_to_review(src: list[DiffFile], config: Configuration) -> list[DiffFile]:
         def skip(x: DiffFile) -> bool:
             return (
                 ".pb." in x.name

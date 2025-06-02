@@ -46,9 +46,7 @@ class Configuration:
 def get_configuration() -> Configuration:
     parser = argparse.ArgumentParser(description="Code reviewer using LLM")
     parser.add_argument("repo", type=str, help="Path to the repository to review")
-    parser.add_argument(
-        "target_branch", type=str, help="Target branch to compare against master"
-    )
+    parser.add_argument("target_branch", type=str, help="Target branch to compare against master")
     parser.add_argument(
         "--review_test_files",
         action=argparse.BooleanOptionalAction,
@@ -78,7 +76,7 @@ def get_configuration() -> Configuration:
         "--translate",
         action=argparse.BooleanOptionalAction,
         default=DEFAULT_TRANSLATE_ENABLED,
-        help=f"Enable/disable translation of review results (default: {'enabled' if DEFAULT_TRANSLATE_ENABLED else 'disabled'})",
+        help=f"Enable/disable translation of review results (default: {'enabled' if DEFAULT_TRANSLATE_ENABLED else 'disabled'})",  # noqa
     )
 
     args = parser.parse_args()

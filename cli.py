@@ -1,4 +1,5 @@
 import logging
+
 from reviewer.locator.service_locator import ServiceLocator
 
 logging.basicConfig(

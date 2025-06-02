@@ -1,3 +1,5 @@
+from typing import Optional
+
 from reviewer.agents.review import Reviewer
 from reviewer.agents.sanitizer import Sanitizer
 from reviewer.agents.translator import Translator
@@ -7,7 +9,6 @@ from reviewer.llm.llm import LLM
 from reviewer.processor.processor import ReviewerProcessor
 from reviewer.processor.review_modes import ReviewModes
 from reviewer.tokenizator.token_counter import TokenCounter
-from typing import Optional
 
 
 class ServiceLocator:

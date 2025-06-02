@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
 
 # Assuming TokenCounter is in reviewer.reviewer.tokenizator.token_counter
 # This import path should work if pytest is run from the project root.
@@ -18,9 +19,7 @@ def qwen_token_counter_instance():
         _ = counter.tokenizer.encode("test")
         return counter
     except (ValueError, ImportError, OSError) as e:
-        pytest.skip(
-            f"Could not load Qwen tokenizer '{QWEN_MODEL_NAME}'. Skipping Qwen-specific tests. Error: {e}"
-        )
+        pytest.skip(f"Could not load Qwen tokenizer '{QWEN_MODEL_NAME}'. Skipping Qwen-specific tests. Error: {e}")
 
 
 # --- Test Class for Initialization ---
@@ -37,9 +36,7 @@ class TestTokenCounterInitialization:
         invalid_model_name = "non-existent-model-12345xyz"
         with pytest.raises(ValueError) as excinfo:
             TokenCounter(invalid_model_name)
-        assert f"Could not load tokenizer for '{invalid_model_name}'" in str(
-            excinfo.value
-        )
+        assert f"Could not load tokenizer for '{invalid_model_name}'" in str(excinfo.value)
 
     @patch("reviewer.tokenizator.token_counter.AutoTokenizer.from_pretrained")
     def test_initialization_import_error(self, mock_from_pretrained):
@@ -60,9 +57,7 @@ class TestTokenCounterInitialization:
             "reviewer.tokenizator.token_counter.AutoTokenizer.from_pretrained",
             side_effect=OSError("Simulated OSError"),
         ):
-            with pytest.raises(
-                ValueError
-            ) as excinfo:  # The class wraps OSError in ValueError
+            with pytest.raises(ValueError) as excinfo:  # The class wraps OSError in ValueError
                 TokenCounter("gpt2")
             assert "Could not load tokenizer for 'gpt2'" in str(excinfo.value)
             assert "Simulated OSError" in str(excinfo.value)
@@ -73,13 +68,9 @@ class TestTokenCounterInitialization:
             "reviewer.tokenizator.token_counter.AutoTokenizer.from_pretrained",
             side_effect=Exception("Unexpected generic error"),
         ):
-            with pytest.raises(
-                ValueError
-            ) as excinfo:  # The class wraps generic Exception in ValueError
+            with pytest.raises(ValueError) as excinfo:  # The class wraps generic Exception in ValueError
                 TokenCounter("gpt2")
-            assert "An unexpected error occurred while loading tokenizer" in str(
-                excinfo.value
-            )
+            assert "An unexpected error occurred while loading tokenizer" in str(excinfo.value)
             assert "Unexpected generic error" in str(excinfo.value)
 
 
@@ -93,21 +84,15 @@ class TestTokenCounterMethodsQwen:
 
     # --- count_tokens tests ---
     def test_count_tokens_qwen_simple_text(self, qwen_token_counter_instance):
-        count_with_special = qwen_token_counter_instance.count_tokens(
-            self.TEXT_HELLO, add_special_tokens=True
-        )
-        count_without_special = qwen_token_counter_instance.count_tokens(
-            self.TEXT_HELLO, add_special_tokens=False
-        )
+        count_with_special = qwen_token_counter_instance.count_tokens(self.TEXT_HELLO, add_special_tokens=True)
+        count_without_special = qwen_token_counter_instance.count_tokens(self.TEXT_HELLO, add_special_tokens=False)
 
         assert count_without_special > 0
         # For "Hello world", Qwen/Qwen3-8B seems to produce the same token count
         assert count_with_special == count_without_special
 
         # Test with more complex text
-        count_with_special_long = qwen_token_counter_instance.count_tokens(
-            self.TEXT_SAMPLE, add_special_tokens=True
-        )
+        count_with_special_long = qwen_token_counter_instance.count_tokens(self.TEXT_SAMPLE, add_special_tokens=True)
         count_without_special_long = qwen_token_counter_instance.count_tokens(
             self.TEXT_SAMPLE, add_special_tokens=False
         )
@@ -118,18 +103,8 @@ class TestTokenCounterMethodsQwen:
         # `encode("", add_special_tokens=False)` -> [] (0 tokens)
         # `encode("", add_special_tokens=True)` -> For Qwen/Qwen3-8B, this is expected to result in 0 tokens
         # even after token_counter.py fix, based on observed behavior.
-        assert (
-            qwen_token_counter_instance.count_tokens(
-                self.EMPTY_TEXT, add_special_tokens=True
-            )
-            == 0
-        )
-        assert (
-            qwen_token_counter_instance.count_tokens(
-                self.EMPTY_TEXT, add_special_tokens=False
-            )
-            == 0
-        )
+        assert qwen_token_counter_instance.count_tokens(self.EMPTY_TEXT, add_special_tokens=True) == 0
+        assert qwen_token_counter_instance.count_tokens(self.EMPTY_TEXT, add_special_tokens=False) == 0
 
     def test_count_tokens_qwen_non_string_input(self, qwen_token_counter_instance):
         assert qwen_token_counter_instance.count_tokens(self.NONE_INPUT) == 0
@@ -137,16 +112,13 @@ class TestTokenCounterMethodsQwen:
 
     # --- get_tokens_as_strings tests ---
     def test_get_tokens_as_strings_qwen_no_special(self, qwen_token_counter_instance):
-        tokens = qwen_token_counter_instance.get_tokens_as_strings(
-            self.TEXT_HELLO, add_special_tokens=False
-        )
+        tokens = qwen_token_counter_instance.get_tokens_as_strings(self.TEXT_HELLO, add_special_tokens=False)
         assert len(tokens) > 0
-        assert all(
-            not t.startswith("<|") for t in tokens
-        )  # Ensure no special tokens like <|endoftext|>
+        assert all(not t.startswith("<|") for t in tokens)  # Ensure no special tokens like <|endoftext|>
 
     def test_get_tokens_as_strings_qwen_with_special(self, qwen_token_counter_instance):
-        # Using TEXT_SAMPLE as TEXT_HELLO, as "Hello world" doesn't appear to get <|...|> special tokens with Qwen/Qwen3-8B.
+        # Using TEXT_SAMPLE as TEXT_HELLO, as "Hello world" doesn't appear to get <|...|>
+        # special tokens with Qwen/Qwen3-8B.
         tokens_sample_with_special = qwen_token_counter_instance.get_tokens_as_strings(
             self.TEXT_SAMPLE, add_special_tokens=True
         )
@@ -154,7 +126,8 @@ class TestTokenCounterMethodsQwen:
             self.TEXT_SAMPLE, add_special_tokens=False
         )
 
-        # Expect more tokens for TEXT_SAMPLE when special tokens are added (consistent with count_tokens test for TEXT_SAMPLE).
+        # Expect more tokens for TEXT_SAMPLE when special tokens are added
+        # (consistent with count_tokens test for TEXT_SAMPLE).
         # For Qwen/Qwen3-8B and TEXT_SAMPLE, it appears add_special_tokens=True does not change the token count.
         # So, we check for greater than or equal.
         assert len(tokens_sample_with_special) >= len(tokens_sample_no_special)
@@ -166,28 +139,21 @@ class TestTokenCounterMethodsQwen:
                 t
                 for t in tokens_sample_with_special
                 if t not in tokens_sample_no_special
-                or tokens_sample_with_special.count(t)
-                > tokens_sample_no_special.count(t)
+                or tokens_sample_with_special.count(t) > tokens_sample_no_special.count(t)
             ]
             # This assertion is important: if lengths differ, we expect the 'added_token_strings' list to be non-empty.
             assert added_token_strings, (
-                "Length of token lists differ, but no distinct added tokens were identified. Check 'added_token_strings' logic."
+                "Length of token lists differ, but no distinct added tokens were identified."
+                "Check 'added_token_strings' logic."
             )
-            assert any(
-                t.startswith("<|") and t.endswith("|>") for t in added_token_strings
-            ), (
+            assert any(t.startswith("<|") and t.endswith("|>") for t in added_token_strings), (
                 f"No <|...|> special tokens found in added tokens for TEXT_SAMPLE. Added: {added_token_strings}"
             )
         # If lengths are equal, it implies no special tokens were added that changed the token list,
         # or the nature of special tokens for this input doesn't involve typical <|...|> markers.
 
     def test_get_tokens_as_strings_qwen_empty_string(self, qwen_token_counter_instance):
-        assert (
-            qwen_token_counter_instance.get_tokens_as_strings(
-                self.EMPTY_TEXT, add_special_tokens=False
-            )
-            == []
-        )
+        assert qwen_token_counter_instance.get_tokens_as_strings(self.EMPTY_TEXT, add_special_tokens=False) == []
 
         tokens_special_empty = qwen_token_counter_instance.get_tokens_as_strings(
             self.EMPTY_TEXT, add_special_tokens=True
@@ -196,24 +162,16 @@ class TestTokenCounterMethodsQwen:
         # for an empty string even with add_special_tokens=True.
         assert len(tokens_special_empty) == 0
         # The following assertion on an empty list is vacuously true.
-        assert all(
-            t.startswith("<|") and t.endswith("|>") for t in tokens_special_empty
-        )
+        assert all(t.startswith("<|") and t.endswith("|>") for t in tokens_special_empty)
 
-    def test_get_tokens_as_strings_qwen_non_string_input(
-        self, qwen_token_counter_instance
-    ):
+    def test_get_tokens_as_strings_qwen_non_string_input(self, qwen_token_counter_instance):
         assert qwen_token_counter_instance.get_tokens_as_strings(self.NONE_INPUT) == []
         assert qwen_token_counter_instance.get_tokens_as_strings(123) == []  # type: ignore
 
     # --- get_token_ids tests ---
     def test_get_token_ids_qwen_simple_text(self, qwen_token_counter_instance):
-        ids_with_special = qwen_token_counter_instance.get_token_ids(
-            self.TEXT_HELLO, add_special_tokens=True
-        )
-        ids_without_special = qwen_token_counter_instance.get_token_ids(
-            self.TEXT_HELLO, add_special_tokens=False
-        )
+        ids_with_special = qwen_token_counter_instance.get_token_ids(self.TEXT_HELLO, add_special_tokens=True)
+        ids_without_special = qwen_token_counter_instance.get_token_ids(self.TEXT_HELLO, add_special_tokens=False)
 
         assert len(ids_without_special) > 0
         # For "Hello world", Qwen/Qwen3-8B seems to produce the same token ID count
@@ -228,12 +186,8 @@ class TestTokenCounterMethodsQwen:
         )
 
     def test_get_token_ids_qwen_empty_string(self, qwen_token_counter_instance):
-        ids_with_special = qwen_token_counter_instance.get_token_ids(
-            self.EMPTY_TEXT, add_special_tokens=True
-        )
-        ids_without_special = qwen_token_counter_instance.get_token_ids(
-            self.EMPTY_TEXT, add_special_tokens=False
-        )
+        ids_with_special = qwen_token_counter_instance.get_token_ids(self.EMPTY_TEXT, add_special_tokens=True)
+        ids_without_special = qwen_token_counter_instance.get_token_ids(self.EMPTY_TEXT, add_special_tokens=False)
 
         # Expect 0 token IDs if Qwen/Qwen3-8B tokenizer returns no IDs
         # for an empty string even with add_special_tokens=True.
@@ -248,16 +202,12 @@ class TestTokenCounterMethodsQwen:
 # --- Test handling of raw_token_output in get_tokens_as_strings ---
 class TestGetTokensAsStringsEdgeCases:
     @patch("reviewer.tokenizator.token_counter.AutoTokenizer.from_pretrained")
-    def test_convert_ids_to_tokens_returns_string(
-        self, mock_auto_tokenizer_from_pretrained
-    ):
+    def test_convert_ids_to_tokens_returns_string(self, mock_auto_tokenizer_from_pretrained):
         # Setup mock tokenizer and its methods
         mock_tokenizer_instance = mock_auto_tokenizer_from_pretrained.return_value
         mock_tokenizer_instance.encode.return_value = [101, 102]  # Simulate token IDs
         # Simulate convert_ids_to_tokens returning a single string (unusual for list input, but tests the guard)
-        mock_tokenizer_instance.convert_ids_to_tokens.return_value = (
-            "a_single_token_string"
-        )
+        mock_tokenizer_instance.convert_ids_to_tokens.return_value = "a_single_token_string"
 
         # Initialize TokenCounter with the mocked tokenizer
         counter = TokenCounter("mocked-model-name")  # Name doesn't matter due to mock
@@ -267,17 +217,11 @@ class TestGetTokensAsStringsEdgeCases:
 
         # Assertions
         assert tokens == ["a_single_token_string"]  # Should be wrapped in a list
-        mock_tokenizer_instance.encode.assert_called_once_with(
-            "some text", add_special_tokens=True
-        )
-        mock_tokenizer_instance.convert_ids_to_tokens.assert_called_once_with(
-            [101, 102]
-        )
+        mock_tokenizer_instance.encode.assert_called_once_with("some text", add_special_tokens=True)
+        mock_tokenizer_instance.convert_ids_to_tokens.assert_called_once_with([101, 102])
 
     @patch("reviewer.tokenizator.token_counter.AutoTokenizer.from_pretrained")
-    def test_convert_ids_to_tokens_returns_list_of_strings(
-        self, mock_auto_tokenizer_from_pretrained
-    ):
+    def test_convert_ids_to_tokens_returns_list_of_strings(self, mock_auto_tokenizer_from_pretrained):
         # Setup mock tokenizer
         mock_tokenizer_instance = mock_auto_tokenizer_from_pretrained.return_value
         mock_tokenizer_instance.encode.return_value = [101, 102, 103]
@@ -292,9 +236,5 @@ class TestGetTokensAsStringsEdgeCases:
         tokens = counter.get_tokens_as_strings("another text", add_special_tokens=True)
 
         assert tokens == ["token1", "token2", "token3"]
-        mock_tokenizer_instance.encode.assert_called_once_with(
-            "another text", add_special_tokens=True
-        )
-        mock_tokenizer_instance.convert_ids_to_tokens.assert_called_once_with(
-            [101, 102, 103]
-        )
+        mock_tokenizer_instance.encode.assert_called_once_with("another text", add_special_tokens=True)
+        mock_tokenizer_instance.convert_ids_to_tokens.assert_called_once_with([101, 102, 103])

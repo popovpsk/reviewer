@@ -1,3 +1,4 @@
+# ruff: noqa
 import pytest
 
 from reviewer.ast_parser.ast_parser import ASTParser
@@ -25,10 +26,7 @@ def func_to_keep():
         parsed_file = ast_parser.parse("1.py", bytes(content, "utf-8"))
 
         assert parsed_file.remove_declaration("func_to_remove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
         # Test removing again (should fail)
         assert not parsed_file.remove_declaration("func_to_remove")
 
@@ -48,10 +46,7 @@ class ClassToKeep:
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("ClassToRemove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
     def test_remove_python_decorated_function(self, ast_parser: ASTParser) -> None:
         content = """
@@ -69,10 +64,7 @@ def func_to_keep():
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("decorated_func_to_remove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
     def test_remove_go_function(self, ast_parser: ASTParser) -> None:
         content = """
@@ -97,10 +89,7 @@ func funcToKeep() {
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("funcToRemove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
     def test_remove_go_method(self, ast_parser: ASTParser) -> None:
         content = """
@@ -129,10 +118,7 @@ func (s *MyStruct) MethodToKeep() {
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("MethodToRemove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
     def test_remove_go_type_spec(self, ast_parser: ASTParser) -> None:
         content = """
@@ -153,10 +139,7 @@ type TypeToKeep int
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("TypeToRemove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
     def test_remove_go_const_spec(self, ast_parser: ASTParser) -> None:
         content = """
@@ -186,10 +169,7 @@ const AnotherConst = 3
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("ConstToRemove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal_specific.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal_specific.strip()
 
     def test_remove_non_existent_declaration(self, ast_parser: ASTParser) -> None:
         content = """
@@ -202,9 +182,7 @@ def existing_func():
         assert not parsed_file.remove_declaration("non_existent_func")
         assert original_content_bytes == parsed_file.content
 
-    def test_remove_python_variable_simple_assignment(
-        self, ast_parser: ASTParser
-    ) -> None:
+    def test_remove_python_variable_simple_assignment(self, ast_parser: ASTParser) -> None:
         content = """
 var_to_remove = 42
 var_to_keep = "hello"
@@ -215,14 +193,9 @@ var_to_keep = "hello"
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("var_to_remove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
-    def test_remove_python_variable_typed_assignment(
-        self, ast_parser: ASTParser
-    ) -> None:
+    def test_remove_python_variable_typed_assignment(self, ast_parser: ASTParser) -> None:
         content = """
 var_to_remove: int = 100
 var_to_keep: str = "world"
@@ -233,14 +206,9 @@ var_to_keep: str = "world"
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("var_to_remove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
-    def test_remove_python_variable_list_assignment(
-        self, ast_parser: ASTParser
-    ) -> None:
+    def test_remove_python_variable_list_assignment(self, ast_parser: ASTParser) -> None:
         content = """
 list_to_remove = [1, 2, 3]
 list_to_keep = [4, 5, 6]
@@ -251,14 +219,9 @@ list_to_keep = [4, 5, 6]
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("list_to_remove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
-    def test_remove_python_variable_dict_assignment(
-        self, ast_parser: ASTParser
-    ) -> None:
+    def test_remove_python_variable_dict_assignment(self, ast_parser: ASTParser) -> None:
         content = """
 dict_to_remove = {"a": 1, "b": 2}
 dict_to_keep = {"c": 3}
@@ -269,10 +232,7 @@ dict_to_keep = {"c": 3}
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("dict_to_remove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
     def test_remove_go_short_variable_declaration(self, ast_parser: ASTParser) -> None:
         content = """
@@ -295,14 +255,9 @@ func main() {
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("varToRemove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
-    def test_remove_go_short_variable_map_declaration(
-        self, ast_parser: ASTParser
-    ) -> None:
+    def test_remove_go_short_variable_map_declaration(self, ast_parser: ASTParser) -> None:
         content = """
 package main
 
@@ -323,14 +278,9 @@ func main() {
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("mapToRemove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
-    def test_remove_go_short_variable_slice_declaration(
-        self, ast_parser: ASTParser
-    ) -> None:
+    def test_remove_go_short_variable_slice_declaration(self, ast_parser: ASTParser) -> None:
         content = """
 package main
 
@@ -351,10 +301,7 @@ func main() {
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("sliceToRemove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
     def test_remove_go_var_declaration_simple(self, ast_parser: ASTParser) -> None:
         content = """
@@ -368,15 +315,12 @@ var varToKeep = "hello"
         expected_content_after_removal = """
 package main
 
-var 
+
 var varToKeep = "hello"
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("varToRemove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
     def test_remove_go_var_declaration_with_type(self, ast_parser: ASTParser) -> None:
         content = """
@@ -388,15 +332,12 @@ var varToKeep string = "world"
         expected_content_after_removal = """
 package main
 
-var 
+
 var varToKeep string = "world"
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("varToRemove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
     def test_remove_go_var_declaration_in_block(self, ast_parser: ASTParser) -> None:
         content = """
@@ -421,21 +362,16 @@ var AnotherVar = true
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
         assert parsed_file.remove_declaration("VarToRemoveInBlock")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
-    def test_remove_go_var_declaration_multi_spec_line(
-        self, ast_parser: ASTParser
-    ) -> None:
+    def test_remove_go_var_declaration_multi_spec_line(self, ast_parser: ASTParser) -> None:
         # If multiple variables are declared in a single var_spec line,
         # and one is targeted, the entire var_spec line is removed.
         content = """
 package main
 
 var (
-    Var1ToRemove, Var2ToKeep = "val1", "val2"
+    Var1ToRemove, Var2ToRemove = "val1", "val2"
     Var3ToKeep = 10
 )
 """
@@ -448,9 +384,65 @@ var (
 )
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file is not None, "Parsing failed for Go content"
         # Targeting Var1ToRemove from "Var1ToRemove, Var2ToKeep" spec
         assert parsed_file.remove_declaration("Var1ToRemove")
-        assert (
-            parsed_file.content.decode("utf-8").strip()
-            == expected_content_after_removal.strip()
-        )
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
+
+    def test_remove_go_var_declaration_simple_in_function(self, ast_parser: ASTParser) -> None:
+        content = """
+package main
+
+import "fmt"
+
+func main() {
+    var varToRemove = 42
+    var varToKeep = "hello"
+    fmt.Println(varToKeep)
+}
+"""
+        expected_content_after_removal = """
+package main
+
+import "fmt"
+
+func main() {
+    
+    var varToKeep = "hello"
+    fmt.Println(varToKeep)
+}
+"""
+        parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file is not None, "Parsing failed for Go content"
+        assert parsed_file.remove_declaration("varToRemove")
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
+        assert not parsed_file.remove_declaration("varToRemove")  # Test removing again
+
+    def test_remove_go_var_declaration_with_type_in_function(self, ast_parser: ASTParser) -> None:
+        content = """
+package main
+
+import "fmt"
+
+func main() {
+    type typeToRemove struct{}
+    var varToKeep string = "world"
+    fmt.Println(varToKeep)
+}
+"""
+        expected_content_after_removal = """
+package main
+
+import "fmt"
+
+func main() {
+    
+    var varToKeep string = "world"
+    fmt.Println(varToKeep)
+}
+"""
+        parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file is not None, "Parsing failed for Go content"
+        assert parsed_file.remove_declaration("typeToRemove")
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
+        assert not parsed_file.remove_declaration("varToRemove")  # Test removing again

@@ -2,8 +2,8 @@ import logging
 from typing import Optional
 
 from grep_ast import filename_to_lang
-from grep_ast.tsl import get_parser, get_language
-from tree_sitter import Tree, Node
+from grep_ast.tsl import get_language, get_parser
+from tree_sitter import Node, Tree
 from tree_sitter_languages.core import Language
 
 # Define query patterns for identifying declarations.
@@ -108,6 +108,18 @@ _GO_DECLARATION_QUERIES = [
     # This targets the var_spec itself.
     (
         """
+        (var_declaration
+            (var_spec
+                name: (identifier) @name
+            )
+            (#eq? @name "{0}")
+        ) @declaration
+        """,
+        "declaration",
+    ),
+    ## Query for blocks of var declarations
+    (
+        """
         (var_spec
           name: (identifier) @name (#eq? @name "{0}")
         ) @declaration
@@ -132,8 +144,7 @@ class ParsedFile:
         self.language: Language = get_language(lang)
 
     def remove_declaration(self, name_to_remove: str) -> bool:
-        """
-        Removes a class or function/method declaration by its name.
+        """Removes a class or function/method declaration by its name.
         Updates self.content and re-parses self.tree.
         Returns True if a declaration was found and removed, False otherwise.
         """
@@ -141,18 +152,14 @@ class ParsedFile:
         if not query_patterns:
             return False  # No queries defined for this language
 
-        node_to_remove_data: Optional[tuple[int, int]] = (
-            None  # Stores (start_byte, end_byte) of the node
-        )
+        node_to_remove_data: Optional[tuple[int, int]] = None  # Stores (start_byte, end_byte) of the node
 
-        for query_text_template, capture_name_for_node in query_patterns:
+        for query_text_template, _capture_name_for_node in query_patterns:
             formatted_query_text = query_text_template.format(name_to_remove)
             try:
                 query = self.language.query(formatted_query_text)
             except Exception as e:  # Syntax error in query, or other tree-sitter issue
-                logging.log(
-                    logging.ERROR, f"Failed to query {formatted_query_text} due to {e}"
-                )
+                logging.log(logging.ERROR, f"Failed to query {formatted_query_text} due to {e}")
                 continue
 
             captures: dict[str, list[Node]] = query.captures(self.tree.root_node)
@@ -195,7 +202,8 @@ class ASTParser:
         tree = self.__file_to_tree(lang, content)
         return ParsedFile(tree=tree, original_content=content, lang=lang)
 
-    def __file_to_tree(self, lang: str, content: bytes) -> Tree:
+    @staticmethod
+    def __file_to_tree(lang: str, content: bytes) -> Tree:
         parser = get_parser(lang)
         tree = parser.parse(content)
         return tree

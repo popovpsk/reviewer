@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import Mock
 
-from reviewer.system_utils.diff import DiffFile
 from reviewer.config.reviewer_config import Configuration
 from reviewer.processor.review_modes import ReviewModes
+from reviewer.system_utils.diff import DiffFile
 
 
 class TestSplitByContextRecursive(unittest.TestCase):
@@ -116,9 +116,7 @@ class TestSplitByContextRecursive(unittest.TestCase):
     def test_single_large_dir_split_into_files(self):
         self.mock_config.context_window = 8000
         diffs = [
-            self._create_diff_file(
-                "large_dir/file_c.py", 3000
-            ),  # ensure sorted by name
+            self._create_diff_file("large_dir/file_c.py", 3000),  # ensure sorted by name
             self._create_diff_file("large_dir/file_a.py", 4000),
             self._create_diff_file("large_dir/file_b.py", 5000),
         ]  # Total 12000 for large_dir.

@@ -4,8 +4,8 @@ import subprocess
 
 def get_local_branches() -> list[str]:
     try:
-        result = subprocess.run(
-            ["git", "branch", "-a"],
+        result = subprocess.run(  # noqa:S603
+            ["git", "branch", "-a"],  # noqa:S607
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
@@ -47,7 +47,7 @@ def get_file_diff(base_branch: str, target_branch: str, file_path: str) -> str:
 
 def run_git_command(command: list[str]) -> str:
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # noqa:S603
             ["git"] + command,
             capture_output=True,
             text=True,

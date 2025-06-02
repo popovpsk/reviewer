@@ -5,8 +5,7 @@ from reviewer.system_utils.os import clear_directory
 
 class PromptLogger:
     def __init__(self):
-        """
-        Initializes the PromptLogger.
+        """Initializes the PromptLogger.
         Creates a 'reviewer_prompts' directory in the current working directory
         and clears it.
         """
@@ -21,22 +20,18 @@ class PromptLogger:
         clear_directory(self.log_dir)
 
     def log_prompt(self, name: str, prompt: str, result: str):
-        """
-        Logs the prompt and its result to files in the instance's log_dir.
+        """Logs the prompt and its result to files in the instance's log_dir.
 
         Args:
             name: A descriptive name for the prompt, used in filenames.
             prompt: The input prompt string.
             result: The result string from the LLM.
+
         """
         sanitized_name = name.replace("/", ".")
 
-        input_filename = os.path.join(
-            self.log_dir, f"{self.log_count}_{sanitized_name}_input.txt"
-        )
-        output_filename = os.path.join(
-            self.log_dir, f"{self.log_count}_{sanitized_name}_output.txt"
-        )
+        input_filename = os.path.join(self.log_dir, f"{self.log_count}_{sanitized_name}_input.txt")
+        output_filename = os.path.join(self.log_dir, f"{self.log_count}_{sanitized_name}_output.txt")
 
         try:
             with open(input_filename, "w", encoding="utf-8") as file:

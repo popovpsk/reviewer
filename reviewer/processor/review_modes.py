@@ -25,20 +25,15 @@ class ReviewModes:
     def auto(self, diffs: list[DiffFile]) -> list[str]:
         for _, diffs_in_dir in self.__group_by_directory(diffs).items():
             for diff in diffs_in_dir:
-                diff.tokens_count = self.__token_counter.count_tokens(
-                    diff.original_content + diff.diff
-                )
+                diff.tokens_count = self.__token_counter.count_tokens(diff.original_content + diff.diff)
 
                 if not diff.original_content:
                     continue
                 if diff.tokens_count < 2048:
                     continue
 
-
                 self.__sanitizer.sanitize(diff, diffs_in_dir)
-                diff.tokens_count = self.__token_counter.count_tokens(
-                    diff.original_content + diff.diff
-                )
+                diff.tokens_count = self.__token_counter.count_tokens(diff.original_content + diff.diff)
 
         if sum(diff.tokens_count for diff in diffs) < self.__config.context_window:
             return self.all_files_at_once(diffs)
@@ -51,8 +46,7 @@ class ReviewModes:
         return result
 
     def split_by_context_recursive(self, diffs: list[DiffFile]) -> list[list[DiffFile]]:
-        """
-        Splits a list of DiffFile objects into sublists (groups) based on token counts
+        """Splits a list of DiffFile objects into sublists (groups) based on token counts
         and a context window limit.
 
         The method tries to keep files from the same directory together if the entire
@@ -87,9 +81,7 @@ class ReviewModes:
                 packable_items.append(
                     {
                         "id": directory_path,
-                        "files": list(
-                            dir_files
-                        ),  # Keep original order of files within small dir
+                        "files": list(dir_files),  # Keep original order of files within small dir
                         "tokens": dir_total_tokens,
                         "type": "dir",
                         "original_path": directory_path,
@@ -102,9 +94,7 @@ class ReviewModes:
                     if file_obj.tokens_count == 0:
                         continue
 
-                    item_type = (
-                        "file_oversized" if file_obj.tokens_count > limit else "file"
-                    )
+                    item_type = "file_oversized" if file_obj.tokens_count > limit else "file"
                     packable_items.append(
                         {
                             "id": file_obj.full_name,
@@ -116,9 +106,7 @@ class ReviewModes:
                     )
 
         # Sort packable items: by tokens, then type (dirs first), then path
-        packable_items.sort(
-            key=lambda x: (x["tokens"], type_map[x["type"]], x["original_path"])
-        )
+        packable_items.sort(key=lambda x: (x["tokens"], type_map[x["type"]], x["original_path"]))
 
         all_groups: list[list[DiffFile]] = []
         current_group_files: list[DiffFile] = []
@@ -133,12 +121,11 @@ class ReviewModes:
                     all_groups.append(list(current_group_files))
                     current_group_files = []
                     current_group_tokens = 0
-                all_groups.append(
-                    list(item_files)
-                )  # Oversized item forms its own group
+                all_groups.append(list(item_files))  # Oversized item forms its own group
                 continue
 
-            # item_tokens is guaranteed to be <= limit here (unless it's an oversized dir that wasn't split, which logic prevents)
+            # item_tokens is guaranteed to be <= limit here
+            # (unless it's an oversized dir that wasn't split, which logic prevents)
             if current_group_tokens + item_tokens <= limit:
                 current_group_files.extend(item_files)
                 current_group_tokens += item_tokens

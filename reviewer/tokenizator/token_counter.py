@@ -4,15 +4,13 @@ from transformers.tokenization_utils_fast import PreTrainedTokenizerFast
 
 
 class TokenCounter:
-    """
-    A class to count tokens in a string using Hugging Face tokenizers.
+    """A class to count tokens in a string using Hugging Face tokenizers.
     This class is intended for production use to get accurate token counts
     relevant to specific pre-trained language models.
     """
 
     def __init__(self, model_name_or_path: str):
-        """
-        Initializes the TokenCounter with a tokenizer from Hugging Face Hub.
+        """Initializes the TokenCounter with a tokenizer from Hugging Face Hub.
 
         Args:
             model_name_or_path: The identifier of the pre-trained model on Hugging Face Hub
@@ -22,33 +20,30 @@ class TokenCounter:
         Raises:
             ValueError: If the tokenizer cannot be loaded (e.g., model not found, network issues).
             ImportError: If the 'transformers' library is not installed.
+
         """
         try:
             # The `transformers` library needs to be installed.
             # e.g., pip install transformers tokenizers
-            self.tokenizer: PreTrainedTokenizer | PreTrainedTokenizerFast = (
-                AutoTokenizer.from_pretrained(model_name_or_path)
+            self.tokenizer: PreTrainedTokenizer | PreTrainedTokenizerFast = AutoTokenizer.from_pretrained(
+                model_name_or_path
             )
-        except ImportError:
+        except ImportError as e:
             raise ImportError(
                 "The 'transformers' library is required to use Hugging Face tokenizers. "
                 "Please install it using 'pip install transformers tokenizers'."
-            )
+            ) from e
         except OSError as e:  # Handles model not found, network issues, etc.
             raise ValueError(
                 f"Could not load tokenizer for '{model_name_or_path}'. "
                 f"Ensure the model identifier is correct, you have an internet connection, "
                 f"and if it's a private/gated model, you are logged in via `huggingface-cli login`. "
-                f"Original error: {e}"
-            )
+            ) from e
         except Exception as e:  # Catch any other unexpected errors during loading
-            raise ValueError(
-                f"An unexpected error occurred while loading tokenizer for '{model_name_or_path}': {e}"
-            )
+            raise ValueError(f"An unexpected error occurred while loading tokenizer for '{model_name_or_path}'") from e
 
     def count_tokens(self, text: str, add_special_tokens: bool = True) -> int:
-        """
-        Counts the number of tokens in the given text using the loaded Hugging Face tokenizer.
+        """Counts the number of tokens in the given text using the loaded Hugging Face tokenizer.
         This typically corresponds to the number of input IDs the model will receive.
 
         Args:
@@ -60,6 +55,7 @@ class TokenCounter:
 
         Returns:
             The number of tokens.
+
         """
         if not isinstance(text, str):
             # Handle cases where text might not be a string, e.g. None or other types
@@ -73,11 +69,8 @@ class TokenCounter:
         token_ids = self.tokenizer.encode(text, add_special_tokens=add_special_tokens)
         return len(token_ids)
 
-    def get_tokens_as_strings(
-        self, text: str, add_special_tokens: bool = False
-    ) -> list[str]:
-        """
-        Tokenizes the text and returns a list of token strings.
+    def get_tokens_as_strings(self, text: str, add_special_tokens: bool = False) -> list[str]:
+        """Tokenizes the text and returns a list of token strings.
 
         Note: `tokenizer.tokenize()` often does not add special tokens by default.
         If you need special tokens included as strings, consider using
@@ -91,6 +84,7 @@ class TokenCounter:
 
         Returns:
             A list of token strings.
+
         """
         if not isinstance(text, str):
             # Or raise TypeError, but for now, align with existing behavior for non-string.
@@ -126,8 +120,7 @@ class TokenCounter:
         return tokens
 
     def get_token_ids(self, text: str, add_special_tokens: bool = True) -> list[int]:
-        """
-        Tokenizes the text and returns a list of token IDs.
+        """Tokenizes the text and returns a list of token IDs.
 
         Args:
             text: The input string to tokenize.
@@ -136,6 +129,7 @@ class TokenCounter:
 
         Returns:
             A list of token IDs.
+
         """
         if not isinstance(text, str):
             # Or raise TypeError.

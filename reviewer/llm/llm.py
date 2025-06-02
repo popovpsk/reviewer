@@ -5,14 +5,14 @@ from typing import Callable
 from openai import OpenAI
 
 from reviewer.config.reviewer_config import (
-    InferenceProvider,
+    FALLBACK_MODEL_API_KEY,
+    FALLBACK_MODEL_BASE_URL,
+    FALLBACK_MODEL_NAME,
     MODEL_API_KEY,
     MODEL_BASE_URL,
-    FALLBACK_MODEL_BASE_URL,
-    FALLBACK_MODEL_API_KEY,
     MODEL_NAME,
-    FALLBACK_MODEL_NAME,
     Configuration,
+    InferenceProvider,
 )
 from reviewer.llm.prompt_logger import PromptLogger  # Import the new logger
 
@@ -23,9 +23,7 @@ class LLM:
         self.__prompt_logger = PromptLogger()  # Instantiate the logger
 
         self.__model = OpenAI(api_key=MODEL_API_KEY, base_url=MODEL_BASE_URL)
-        self.__fallback_model = OpenAI(
-            api_key=FALLBACK_MODEL_API_KEY, base_url=FALLBACK_MODEL_BASE_URL
-        )
+        self.__fallback_model = OpenAI(api_key=FALLBACK_MODEL_API_KEY, base_url=FALLBACK_MODEL_BASE_URL)
 
         if configuration.inference_provider == InferenceProvider.LlamaCpp:
             # Ensure that models.list() and its data attribute are valid before accessing.
@@ -57,7 +55,9 @@ class LLM:
         )
         if response.usage:  # Check if usage data is available
             logging.info(
-                f"prompt_eval_count:{response.usage.prompt_tokens}, total_tokens:{response.usage.total_tokens}, eval:{response.usage.total_tokens - response.usage.prompt_tokens}"
+                f"prompt_eval_count:{response.usage.prompt_tokens} "
+                f"total_tokens:{response.usage.total_tokens} "
+                f"eval:{response.usage.total_tokens - response.usage.prompt_tokens}"
             )
         else:
             logging.warning("Usage data not available in response from primary model.")
@@ -75,12 +75,12 @@ class LLM:
         )
         if response.usage:  # Check if usage data is available
             logging.info(
-                f"prompt_eval_count:{response.usage.prompt_tokens}, total_tokens:{response.usage.total_tokens}, eval:{response.usage.total_tokens - response.usage.prompt_tokens}"
+                f"prompt_eval_count:{response.usage.prompt_tokens} "
+                f"total_tokens:{response.usage.total_tokens} "
+                f"eval:{response.usage.total_tokens - response.usage.prompt_tokens} "
             )
         else:
-            logging.warning(
-                "Usage data not available in response from fallback (llama) model."
-            )
+            logging.warning("Usage data not available in response from fallback (llama) model.")
 
         content = response.choices[0].message.content.strip()
         content = self.__remove_think_blocks(content)
@@ -90,9 +90,7 @@ class LLM:
         try:
             return self.__generate(prompt)
         except BaseException as e:  # Consider catching more specific exceptions
-            logging.error(
-                f"LLM error with primary model: {e}, falling back to local model."
-            )
+            logging.error(f"LLM error with primary model: {e}, falling back to local model.")
             return self.__generate_llama(prompt)
 
     @staticmethod
