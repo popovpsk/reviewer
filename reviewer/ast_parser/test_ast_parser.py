@@ -24,7 +24,7 @@ def func_to_keep():
     print("hello")
 """
         parsed_file = ast_parser.parse("1.py", bytes(content, "utf-8"))
-
+        assert parsed_file
         assert parsed_file.remove_declaration("func_to_remove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
         # Test removing again (should fail)
@@ -45,6 +45,7 @@ class ClassToKeep:
     pass
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("ClassToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -63,6 +64,7 @@ def func_to_keep():
     pass
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("decorated_func_to_remove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -88,6 +90,7 @@ func funcToKeep() {
 }
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("funcToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -117,6 +120,7 @@ func (s *MyStruct) MethodToKeep() {
 }
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("MethodToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -138,6 +142,7 @@ package main
 type TypeToKeep int
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("TypeToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -168,6 +173,7 @@ const (
 const AnotherConst = 3
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("ConstToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal_specific.strip()
 
@@ -177,8 +183,8 @@ def existing_func():
     pass
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
+        assert parsed_file
         original_content_bytes = parsed_file.content
-
         assert not parsed_file.remove_declaration("non_existent_func")
         assert original_content_bytes == parsed_file.content
 
@@ -192,6 +198,7 @@ var_to_keep = "hello"
 var_to_keep = "hello"
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("var_to_remove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -205,6 +212,7 @@ var_to_keep: str = "world"
 var_to_keep: str = "world"
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("var_to_remove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -218,6 +226,7 @@ list_to_keep = [4, 5, 6]
 list_to_keep = [4, 5, 6]
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("list_to_remove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -231,6 +240,7 @@ dict_to_keep = {"c": 3}
 dict_to_keep = {"c": 3}
 """
         parsed_file = ast_parser.parse("test.py", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("dict_to_remove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -254,6 +264,7 @@ func main() {
 }
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("varToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -277,6 +288,7 @@ func main() {
 }
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("mapToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -300,6 +312,7 @@ func main() {
 }
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("sliceToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -319,6 +332,7 @@ package main
 var varToKeep = "hello"
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("varToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -336,6 +350,7 @@ package main
 var varToKeep string = "world"
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("varToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 
@@ -361,6 +376,7 @@ var (
 var AnotherVar = true
 """
         parsed_file = ast_parser.parse("test.go", bytes(content, "utf-8"))
+        assert parsed_file
         assert parsed_file.remove_declaration("VarToRemoveInBlock")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
 

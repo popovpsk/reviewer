@@ -3,7 +3,7 @@ import logging
 from reviewer.locator.service_locator import ServiceLocator
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(message)s",
     handlers=[
         logging.StreamHandler(),

@@ -40,7 +40,7 @@ class Configuration:
     review_mode: str = DEFAULT_REVIEW_MODE
     inference_provider: str = DEFAULT_INFERENCE_PROVIDER
     translate_enabled: bool = DEFAULT_TRANSLATE_ENABLED
-    context_window: int = 32768
+    context_window: int = 16384
 
 
 def get_configuration() -> Configuration:

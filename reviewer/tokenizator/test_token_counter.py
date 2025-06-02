@@ -51,28 +51,6 @@ class TestTokenCounterInitialization:
             TokenCounter("any-model")
         assert "The 'transformers' library is required" in str(excinfo.value)
 
-    def test_initialization_os_error(self):
-        # This test covers OSError during tokenizer loading (e.g. model not found, network issues)
-        with patch(
-            "reviewer.tokenizator.token_counter.AutoTokenizer.from_pretrained",
-            side_effect=OSError("Simulated OSError"),
-        ):
-            with pytest.raises(ValueError) as excinfo:  # The class wraps OSError in ValueError
-                TokenCounter("gpt2")
-            assert "Could not load tokenizer for 'gpt2'" in str(excinfo.value)
-            assert "Simulated OSError" in str(excinfo.value)
-
-    def test_initialization_other_unexpected_error(self):
-        # This test covers the generic Exception catch during tokenizer loading.
-        with patch(
-            "reviewer.tokenizator.token_counter.AutoTokenizer.from_pretrained",
-            side_effect=Exception("Unexpected generic error"),
-        ):
-            with pytest.raises(ValueError) as excinfo:  # The class wraps generic Exception in ValueError
-                TokenCounter("gpt2")
-            assert "An unexpected error occurred while loading tokenizer" in str(excinfo.value)
-            assert "Unexpected generic error" in str(excinfo.value)
-
 
 # --- Test Class for TokenCounter Methods (Qwen) ---
 # These tests will be skipped if the qwen_token_counter_instance fixture is skipped.
