@@ -128,9 +128,36 @@ _GO_DECLARATION_QUERIES = [
     ),
 ]
 
+# Define query patterns for Protocol Buffers
+_PROTO_DECLARATION_QUERIES = [
+    # Query for messages
+    (
+        """
+        (message
+          (message_name
+            (identifier) @name (#eq? @name "{}")
+          ) 
+        ) @declaration
+        """,
+        "declaration",
+    ),
+    # Query for rpc calls within a service
+    (
+        """
+        (rpc
+          (rpc_name
+            (identifier) @name (#eq? @name "{}")
+          ) 
+        ) @declaration
+        """,
+        "declaration",
+    ),
+]
+
 _LANG_SPECIFIC_QUERIES = {
     "python": _PYTHON_DECLARATION_QUERIES,
     "go": _GO_DECLARATION_QUERIES,
+    "proto": _PROTO_DECLARATION_QUERIES,
     # Add queries for other languages here, e.g., "javascript"
 }
 

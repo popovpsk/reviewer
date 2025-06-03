@@ -462,3 +462,63 @@ func main() {
         assert parsed_file.remove_declaration("typeToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
         assert not parsed_file.remove_declaration("varToRemove")  # Test removing again
+
+    def test_remove_proto_message(self, ast_parser: ASTParser) -> None:
+        content = """
+syntax = "proto3";
+
+message MessageToRemove {
+  string field1 = 1;
+}
+
+message MessageToKeep {
+  int32 field2 = 1;
+}
+"""
+        expected_content_after_removal = """
+syntax = "proto3";
+
+
+
+message MessageToKeep {
+  int32 field2 = 1;
+}
+"""
+        parsed_file = ast_parser.parse("test.proto", bytes(content, "utf-8"))
+        assert parsed_file, "Parsing .proto file failed"
+        assert parsed_file.remove_declaration("MessageToRemove")
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
+        assert not parsed_file.remove_declaration("MessageToRemove")
+
+    def test_remove_proto_rpc(self, ast_parser: ASTParser) -> None:
+        content = """
+syntax = "proto3";
+
+service MyService {
+  rpc RpcToRemove (RequestType) returns (ResponseType);
+  rpc RpcToKeep (AnotherRequest) returns (AnotherResponse);
+}
+
+message RequestType {}
+message ResponseType {}
+message AnotherRequest {}
+message AnotherResponse {}
+"""
+        expected_content_after_removal = """
+syntax = "proto3";
+
+service MyService {
+  
+  rpc RpcToKeep (AnotherRequest) returns (AnotherResponse);
+}
+
+message RequestType {}
+message ResponseType {}
+message AnotherRequest {}
+message AnotherResponse {}
+"""
+        parsed_file = ast_parser.parse("test.proto", bytes(content, "utf-8"))
+        assert parsed_file, "Parsing .proto file failed"
+        assert parsed_file.remove_declaration("RpcToRemove")
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
+        assert not parsed_file.remove_declaration("RpcToRemove")
