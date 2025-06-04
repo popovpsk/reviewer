@@ -8,7 +8,7 @@ from reviewer.config.reviewer_config import Configuration, get_configuration
 from reviewer.llm.llm import LLM
 from reviewer.processor.processor import ReviewerProcessor
 from reviewer.processor.review_modes import ReviewModes
-from reviewer.tokenizator.token_counter import TokenCounter
+from reviewer.tokenization.token_counter import TokenCounter
 
 
 class ServiceLocator:

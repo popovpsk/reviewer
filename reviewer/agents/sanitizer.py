@@ -1,4 +1,5 @@
 import logging
+import re
 
 from reviewer.ast_parser.ast_parser import ASTParser
 from reviewer.llm.llm import LLM
@@ -76,7 +77,12 @@ class Sanitizer:
         for definition in declarations_to_delete:
             original_file.remove_declaration(definition)
 
+        
         file.original_content = original_file.content.decode("utf-8")
+
+    @staticmethod
+    def __remove_extra_space(content: str) -> str:
+        return re.sub(r'\n{3,}', '\n\n', content)
 
     @staticmethod
     def __parse_llm_response(response: str) -> list[str]:
@@ -88,3 +94,5 @@ class Sanitizer:
         identifiers = [line.strip() for line in lines if line.strip()]
 
         return identifiers
+
+    

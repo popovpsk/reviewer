@@ -522,3 +522,111 @@ message AnotherResponse {}
         assert parsed_file.remove_declaration("RpcToRemove")
         assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
         assert not parsed_file.remove_declaration("RpcToRemove")
+
+    def test_remove_typescript_function(self, ast_parser: ASTParser) -> None:
+        content = """
+function funcToRemove(): void {
+    console.log("remove me");
+}
+
+function funcToKeep(): string {
+    return "keep me";
+}
+"""
+        expected_content_after_removal = """
+
+function funcToKeep(): string {
+    return "keep me";
+}
+"""
+        parsed_file = ast_parser.parse("test.ts", bytes(content, "utf-8"))
+        assert parsed_file, "Parsing TypeScript file failed"
+        assert parsed_file.remove_declaration("funcToRemove")
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
+        assert not parsed_file.remove_declaration("funcToRemove")
+
+    def test_remove_typescript_class(self, ast_parser: ASTParser) -> None:
+        content = """
+class ClassToRemove {
+    method() {
+        console.log("remove me");
+    }
+}
+
+class ClassToKeep {
+    method() {
+        console.log("keep me");
+    }
+}
+"""
+        expected_content_after_removal = """
+
+class ClassToKeep {
+    method() {
+        console.log("keep me");
+    }
+}
+"""
+        parsed_file = ast_parser.parse("test.ts", bytes(content, "utf-8"))
+        assert parsed_file, "Parsing TypeScript file failed"
+        assert parsed_file.remove_declaration("ClassToRemove")
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
+
+    def test_remove_typescript_interface(self, ast_parser: ASTParser) -> None:
+        content = """
+interface InterfaceToRemove {
+    prop: string;
+}
+
+interface InterfaceToKeep {
+    prop: number;
+}
+"""
+        expected_content_after_removal = """
+
+interface InterfaceToKeep {
+    prop: number;
+}
+"""
+        parsed_file = ast_parser.parse("test.ts", bytes(content, "utf-8"))
+        assert parsed_file, "Parsing TypeScript file failed"
+        assert parsed_file.remove_declaration("InterfaceToRemove")
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
+
+    def test_remove_typescript_type_alias(self, ast_parser: ASTParser) -> None:
+        content = """
+type TypeToRemove = string;
+type TypeToKeep = number;
+"""
+        expected_content_after_removal = """
+
+type TypeToKeep = number;
+"""
+        parsed_file = ast_parser.parse("test.ts", bytes(content, "utf-8"))
+        assert parsed_file, "Parsing TypeScript file failed"
+        assert parsed_file.remove_declaration("TypeToRemove")
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()
+
+    def test_remove_typescript_enum(self, ast_parser: ASTParser) -> None:
+        content = """
+enum EnumToRemove {
+    Value1,
+    Value2
+}
+
+enum EnumToKeep {
+    ValueA,
+    ValueB
+}
+"""
+        expected_content_after_removal = """
+
+enum EnumToKeep {
+    ValueA,
+    ValueB
+}
+"""
+        parsed_file = ast_parser.parse("test.ts", bytes(content, "utf-8"))
+        assert parsed_file, "Parsing TypeScript file failed"
+        assert parsed_file.remove_declaration("EnumToRemove")
+        assert parsed_file.content.decode("utf-8").strip() == expected_content_after_removal.strip()

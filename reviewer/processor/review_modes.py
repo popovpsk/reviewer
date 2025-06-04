@@ -6,7 +6,7 @@ from reviewer.agents.review import Reviewer
 from reviewer.agents.sanitizer import Sanitizer
 from reviewer.config.reviewer_config import Configuration
 from reviewer.system_utils.diff import DiffFile
-from reviewer.tokenizator.token_counter import TokenCounter
+from reviewer.tokenization.token_counter import TokenCounter
 
 
 class ReviewModes:

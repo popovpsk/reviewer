@@ -1,10 +1,10 @@
 import logging
-from typing import Optional
+from typing import Optional, cast
 
 from grep_ast import filename_to_lang
 from grep_ast.tsl import get_language, get_parser
 from tree_sitter import Node, Tree
-from tree_sitter_languages.core import Language
+from tree_sitter_language_pack import SupportedLanguage
 
 # Define query patterns for identifying declarations.
 # These are for Python. More languages can be added.
@@ -136,7 +136,7 @@ _PROTO_DECLARATION_QUERIES = [
         (message
           (message_name
             (identifier) @name (#eq? @name "{}")
-          ) 
+          )
         ) @declaration
         """,
         "declaration",
@@ -147,9 +147,43 @@ _PROTO_DECLARATION_QUERIES = [
         (rpc
           (rpc_name
             (identifier) @name (#eq? @name "{}")
-          ) 
+          )
         ) @declaration
         """,
+        "declaration",
+    ),
+]
+
+# Define query patterns for TypeScript
+_TYPESCRIPT_DECLARATION_QUERIES = [
+    # Query for functions
+    (
+        """(function_declaration name: (identifier) @name) @declaration""",
+        "declaration",
+    ),
+    # Query for classes
+    (
+        """(class_declaration name: (type_identifier) @name) @declaration""",
+        "declaration",
+    ),
+    # Query for variable declarations (const, let, var)
+    (
+        """(variable_declaration (variable_declarator name: (identifier) @name)) @declaration""",
+        "declaration",
+    ),
+    # Query for interfaces
+    (
+        """(interface_declaration name: (type_identifier) @name) @declaration""",
+        "declaration",
+    ),
+    # Query for type aliases
+    (
+        """(type_alias_declaration name: (type_identifier) @name) @declaration""",
+        "declaration",
+    ),
+    # Query for enums
+    (
+        """(enum_declaration name: (identifier) @name) @declaration""",
         "declaration",
     ),
 ]
@@ -158,7 +192,7 @@ _LANG_SPECIFIC_QUERIES = {
     "python": _PYTHON_DECLARATION_QUERIES,
     "go": _GO_DECLARATION_QUERIES,
     "proto": _PROTO_DECLARATION_QUERIES,
-    # Add queries for other languages here, e.g., "javascript"
+    "typescript": _TYPESCRIPT_DECLARATION_QUERIES,
 }
 
 
@@ -167,8 +201,11 @@ class ParsedFile:
         self.tree = tree
         self.original_content = original_content
         self.content = original_content
-        self.lang = lang
-        self.language: Language = get_language(lang)
+        # lang is received as str but is known to be one of the supported literals
+        # based on upstream checks. Cast it for type checking purposes.
+        self.lang: str = lang
+        # get_language expects SupportedLanguage, use the casted self.lang
+        self.language = get_language(cast(SupportedLanguage, self.lang))
 
     def remove_declaration(self, name_to_remove: str) -> bool:
         """Removes a class or function/method declaration by its name.
@@ -207,7 +244,7 @@ class ParsedFile:
             self.content = self.content[:start_byte] + self.content[end_byte:]
 
             # Re-parse the modified content
-            parser = get_parser(self.lang)
+            parser = get_parser(self.lang)  # type: ignore
             self.tree = parser.parse(self.content)
             return True
 
@@ -231,6 +268,6 @@ class ASTParser:
 
     @staticmethod
     def __file_to_tree(lang: str, content: bytes) -> Tree:
-        parser = get_parser(lang)
+        parser = get_parser(lang)  # type: ignore
         tree = parser.parse(content)
         return tree
